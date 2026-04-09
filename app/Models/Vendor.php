@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model
+class Vendor extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type', 'availability_time', 'is_active'];
+    protected $fillable = ['name', 'contact_person', 'phone', 'is_active'];
 
     public function products(): HasMany
     {
