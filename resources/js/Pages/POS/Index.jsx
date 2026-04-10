@@ -6,6 +6,7 @@ import ProductGrid from '@/Components/POS/ProductGrid';
 import CartPanel from '@/Components/POS/CartPanel';
 import VariablePriceModal from '@/Components/POS/VariablePriceModal';
 import BillModal from '@/Components/POS/BillModal';
+import DigitalReceipt from '@/Components/POS/DigitalReceipt';
 
 /**
  * POS/Index — Main Staff POS Interface.
@@ -22,6 +23,7 @@ export default function Index({ categories, tables }) {
     const [variableProduct, setVariableProduct] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeBill, setActiveBill] = useState(null); // Consolidated bill for current table
+    const [receiptOrder, setReceiptOrder] = useState(null); // Order to show receipt for
     const [toast, setToast] = useState(null);
 
     // ── Cart Helpers ──────────────────────────────────
@@ -143,11 +145,23 @@ export default function Index({ categories, tables }) {
     const processPayment = (orderId, method) => {
         router.post(route('orders.checkout', orderId), { payment_method: method }, {
             onSuccess: () => {
+                const completedOrder = { ...activeBill, payment_method: method };
                 setActiveBill(null);
+                setReceiptOrder(completedOrder);
                 setSelectedTable(null);
                 showToast('Bayaran berjaya! ✓', 'success');
             }
         });
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const shareWhatsApp = (order, total) => {
+        const phone = ""; // Customer phone can be added here if we had it
+        const text = `Resit Café Kak Na\nOrder: #${order.id}\nTarikh: ${new Date(order.created_at).toLocaleString()}\nJumlah: RM ${total.toFixed(2)}\n\nTerima Kasih!`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     // ── Toast ─────────────────────────────────────────
@@ -235,6 +249,20 @@ export default function Index({ categories, tables }) {
                         onPay={processPayment}
                         onClose={() => setActiveBill(null)}
                     />
+                )}
+
+                {receiptOrder && (
+                    <div className="pos-modal-overlay">
+                        <div className="pos-modal pos-modal--receipt">
+                            <DigitalReceipt
+                                order={receiptOrder}
+                                table={tables.find(t => t.id === receiptOrder.table_id)}
+                                onPrint={handlePrint}
+                                onShareWhatsApp={shareWhatsApp}
+                                onClose={() => setReceiptOrder(null)}
+                            />
+                        </div>
+                    </div>
                 )}
 
                 {/* ── Variable Price Modal ────────────── */}

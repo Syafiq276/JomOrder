@@ -24,17 +24,21 @@ class OrderController extends Controller
             $query->where('is_active', true)->orderBy('name');
         }])->orderBy('name')->get();
 
-        // Load tables and check for active orders (pending, preparing, or served)
-        $tables = Table::where('is_active', true)->get()->map(function ($table) {
-            $activeOrder = Order::where('table_id', $table->id)
-                ->whereIn('status', ['pending', 'preparing', 'served'])
-                ->with('items.product')
-                ->first();
-
-            $table->active_order = $activeOrder;
-            $table->is_occupied = (bool)$activeOrder;
-            return $table;
-        });
+        // Load tables and check for active orders (pending, preparing, or served) in a single optimized query
+        $tables = Table::where('is_active', true)
+            ->with(['orders' => function ($query) {
+                $query->whereIn('status', ['pending', 'preparing', 'served'])
+                      ->with('items.product');
+            }])
+            ->get()
+            ->map(function ($table) {
+                // Attach the first active order to the table object for the frontend
+                $activeOrder = $table->orders->first();
+                $table->active_order = $activeOrder;
+                $table->is_occupied = (bool)$activeOrder;
+                unset($table->orders); // Remove the collection to keep the payload clean
+                return $table;
+            });
 
         return Inertia::render('POS/Index', [
             'categories' => $categories,
