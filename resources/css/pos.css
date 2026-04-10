@@ -86,9 +86,70 @@
 }
 
 .pos-header__time {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--pos-brown);
+}
+
+.pos-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pos-header__link {
+    color: var(--pos-brown);
+    font-weight: 700;
     font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--pos-gold-light);
+    text-decoration: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.4);
+    transition: all 0.2s ease;
+}
+
+.pos-header__link:hover {
+    background: white;
+}
+
+.pos-header__logout {
+    background: #FF5252;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 800;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(255, 82, 82, 0.2);
+}
+
+.pos-header__logout:hover {
+    background: #D32F2F;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(255, 82, 82, 0.3);
+}
+
+/* ── Admin Sidebar Logout ────────────────────────────── */
+.admin-logout-btn {
+    width: 100%;
+    margin-top: 1rem;
+    background: #FFF;
+    color: #FF5252;
+    border: 2px solid #FF5252;
+    padding: 0.8rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-logout-btn:hover {
+    background: #FF5252;
+    color: white;
+    box-shadow: 0 8px 20px rgba(255, 82, 82, 0.2);
 }
 
 .pos-header__back {
@@ -1851,4 +1912,132 @@
     .no-print { display: none !important; }
     .pos-modal-overlay { background: none; }
 }
+
+/* ── Custom Premium Login Page ─────────────────────────── */
+.login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url('/images/brand/login-bg.png') no-repeat center center fixed;
+    background-size: cover;
+    padding: 2rem;
+    position: relative;
+}
+
+.login-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(84, 58, 52, 0.4), rgba(46, 28, 22, 0.6));
+    backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+.login-card {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.login-logo {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--pos-brown-dark);
+    margin-bottom: 0.5rem;
+    display: block;
+    letter-spacing: -1px;
+}
+
+.login-welcome {
+    color: var(--pos-brown);
+    font-weight: 600;
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.login-field {
+    margin-bottom: 1.5rem;
+}
+
+.login-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pos-brown-dark);
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.login-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 2px solid #E5E7EB;
+    background: white;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.login-input:focus {
+    border-color: var(--pos-gold);
+    box-shadow: 0 0 0 4px rgba(224, 170, 62, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    background: var(--pos-gold);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 20px rgba(224, 170, 62, 0.3);
+    margin-top: 1rem;
+}
+
+.login-btn:hover:not(:disabled) {
+    background: var(--pos-brown-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(46, 28, 22, 0.4);
+}
+
+.login-btn:active {
+    transform: scale(0.98);
+}
+
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--pos-brown);
+    opacity: 0.7;
+}
+
+
+/* -- PDF & Sharing UI Extensions -- */
+.pos-btn--info { background: #0288D1; color: white; }
+.pos-btn--info:hover { background: #01579B; }
+.pos-btn--success:disabled, .pos-btn--info:disabled, .pos-btn--gold:disabled { opacity: 0.6; cursor: not-allowed; }
 

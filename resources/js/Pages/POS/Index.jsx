@@ -201,9 +201,21 @@ export default function Index({ categories, tables }) {
                     </div>
                     <div className="pos-header__info">
                         <span className="pos-header__time">{timeStr}</span>
-                        <a href={route('dashboard')} className="pos-header__back">
-                            ← Dashboard
-                        </a>
+                        <div className="pos-header__actions">
+                            {usePage().props.auth.user.role === 'admin' && (
+                                <Link href={route('admin.dashboard')} className="pos-header__link">
+                                    ← Dashboard
+                                </Link>
+                            )}
+                            <Link 
+                                href={route('logout')} 
+                                method="post" 
+                                as="button" 
+                                className="pos-header__logout"
+                            >
+                                Log Keluar
+                            </Link>
+                        </div>
                     </div>
                 </header>
 
