@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage, Link } from '@inertiajs/react';
 import POSLayout from '@/Layouts/POSLayout';
 import CategoryTabs from '@/Components/POS/CategoryTabs';
 import ProductGrid from '@/Components/POS/ProductGrid';
