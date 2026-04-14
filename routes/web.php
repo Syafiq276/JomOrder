@@ -13,6 +13,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ── Customer Public Ordering (QR) ─────────────────────
+Route::prefix('order/table/{table}')->group(function () {
+    Route::get('/', [OrderController::class, 'customerRegistration'])->name('customer.register');
+    Route::post('/start', [OrderController::class, 'startCustomerSession'])->name('customer.start');
+    Route::get('/menu', [OrderController::class, 'publicMenu'])->name('customer.menu');
+});
+
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
     $user = auth()->user();
     

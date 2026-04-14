@@ -11,7 +11,15 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['table_id', 'total_amount', 'status', 'payment_method', 'source'];
+    protected $fillable = [
+        'table_id', 
+        'total_amount', 
+        'status', 
+        'payment_method', 
+        'source', 
+        'customer_phone', 
+        'customer_name'
+    ];
 
     public function table(): BelongsTo
     {

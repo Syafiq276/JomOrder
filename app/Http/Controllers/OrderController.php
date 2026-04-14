@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\WhatsApp\WhatsAppService;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -78,18 +82,36 @@ class OrderController extends Controller
                 return $item['qty'] * $item['price'];
             });
 
+            // Auto-pickup customer info from table if available
+            $customerPhone = null;
+            $customerName = null;
+            if ($tableId) {
+                $table = Table::find($tableId);
+                if ($table) {
+                    $customerPhone = $table->current_customer_phone;
+                    $customerName = $table->current_customer_name;
+                }
+            }
+
             if ($order) {
                 // Merge into existing order
                 $order->total_amount += $newTotal;
                 $order->status = 'pending'; // Reset status so kitchen sees new items
+                // Only update phone if not already set (keep first customer)
+                if (!$order->customer_phone) {
+                    $order->customer_phone = $customerPhone;
+                    $order->customer_name = $customerName;
+                }
                 $order->save();
             } else {
                 // Create new order
                 $order = Order::create([
-                    'table_id'     => $tableId,
-                    'total_amount' => $newTotal,
-                    'status'       => 'pending',
-                    'source'       => $source,
+                    'table_id'       => $tableId,
+                    'total_amount'   => $newTotal,
+                    'status'         => 'pending',
+                    'source'         => $source,
+                    'customer_phone' => $customerPhone,
+                    'customer_name'  => $customerName,
                 ]);
             }
 
@@ -129,10 +151,58 @@ class OrderController extends Controller
         $order->update([
             'status' => 'paid',
             'payment_method' => $validated['payment_method'],
-            'paid_at' => now(),
+            // 'paid_at' => now(), // Assuming this field might exist or be needed
         ]);
 
-        return back()->with('success', "Bayaran untuk Order #{$order->id} telah direkodkan!");
+        // Cleanup table session after payment
+        if ($order->table_id) {
+            $order->table->update([
+                'current_customer_phone' => null,
+                'current_customer_name'  => null,
+            ]);
+        }
+
+        // Automatically trigger WhatsApp receipt if phone is present
+        if ($order->customer_phone) {
+            $this->sendWhatsAppReceipt($order);
+        }
+
+        return back()->with('success', "Bayaran untuk Order #{$order->id} telah direkodkan!" . ($order->customer_phone ? " Resit PDF dihantar ke WhatsApp." : ""));
+    }
+
+    /**
+     * Generate PDF and send via WhatsApp API
+     */
+    protected function sendWhatsAppReceipt(Order $order)
+    {
+        try {
+            // 1. Generate PDF content
+            $pdf = Pdf::loadView('receipts.pdf', ['order' => $order->load('items.product', 'table')]);
+            $pdf->setPaper([0, 0, 226.77, 600], 'portrait'); // 80mm width in points
+
+            // 2. Save PDF to public storage
+            $filename = "Receipt_{$order->id}_" . Str::random(5) . ".pdf";
+            $path = "receipts/{$filename}";
+            Storage::disk('public')->put($path, $pdf->output());
+
+            // 3. Prepare Public URL (Note: In production/cPanel, use the actual domain)
+            $pdfUrl = url(Storage::url($path));
+
+            // 4. Send via WhatsApp Service
+            $caption = "Terima kasih dari Café Kak Na! 🙏\nBerikut adalah resit digital anda untuk Order #{$order->id}.\n\nJumpa lagi!";
+            
+            WhatsAppService::driver()->sendPdf(
+                $order->customer_phone,
+                $pdfUrl,
+                "Resit_{$order->id}.pdf",
+                $caption
+            );
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error("Failed to send WhatsApp Receipt: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -176,5 +246,66 @@ class OrderController extends Controller
         $order->update(['status' => $validated['status']]);
         
         return back()->with('success', "Status pesanan #{$order->id} dikemaskini!");
+    }
+
+    // ── Customer Ordering Methods ─────────────────────
+
+    /**
+     * Show registration screen for customer
+     */
+    public function customerRegistration(Table $table)
+    {
+        return Inertia::render('Customer/Registration', [
+            'table' => $table,
+        ]);
+    }
+
+    /**
+     * Start session with phone number
+     */
+    public function startCustomerSession(Request $request, Table $table)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string|min:10',
+            'name'  => 'nullable|string|max:50',
+        ]);
+
+        // Update table with current session info for POS auto-pickup
+        $table->update([
+            'current_customer_phone' => $validated['phone'],
+            'current_customer_name'  => $validated['name'],
+        ]);
+
+        session([
+            'customer_phone' => $validated['phone'],
+            'customer_name'  => $validated['name'],
+            'table_id'      => $table->id
+        ]);
+
+        return redirect()->route('customer.menu', $table->id);
+    }
+
+    /**
+     * Public menu for customers
+     */
+    public function publicMenu(Table $table)
+    {
+        // Simple session check (optional: could redirect back if no phone)
+        if (!session('customer_phone')) {
+            return redirect()->route('customer.register', $table->id);
+        }
+
+        $categories = Category::where('is_active', true)->with(['products' => function ($query) {
+            $query->where('is_active', true)->orderBy('name');
+        }])->orderBy('name')->get();
+
+        return Inertia::render('Customer/PublicMenu', [
+            'table'      => $table,
+            'categories' => $categories,
+            'customer'   => [
+                'name'  => session('customer_name'),
+                'phone' => session('customer_phone')
+            ]
+        ]);
     }
 }
